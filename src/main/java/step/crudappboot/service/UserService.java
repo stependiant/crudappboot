@@ -27,7 +27,7 @@ public class UserService {
             log.info("Found {} users", users.size());
             return users;
         } catch (NullPointerException e) {
-            log.debug("Error fetching all users", e);
+            log.debug("Null users ", e);
             return null;
         }
     }
