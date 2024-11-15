@@ -26,7 +26,7 @@ public class UserRepository {
         return user;
     }
 
-    public void delete(long id) {
+    public void deleteById(long id) {
         User user = findById(id);
         if (user != null) {
             entityManager.remove(user);
@@ -45,7 +45,7 @@ public class UserRepository {
         return findByName(name) != null;
     }
 
-    public User findByName(String name) {
+    private User findByName(String name) {
         return entityManager.createQuery("SELECT User FROM User WHERE name = :name", User.class)
                 .setParameter("name", name)
                 .getSingleResult();
