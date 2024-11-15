@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Пользователи</title>
+    <meta charset="UTF-8">
+    <style>
+        /* Общий стиль */
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Стиль для формы добавления пользователя */
+        #addUserContainer {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        #nameInput {
+            padding: 10px;
+            font-size: 16px;
+            margin-right: 10px;
+            flex-grow: 1;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        #addUserButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #addUserButton:hover {
+            background-color: #45a049;
+        }
+
+        /* Стиль для списка пользователей */
+        #usersContainer {
+            width: 100%;
+            max-width: 600px;
+        }
+
+        .user {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .editContainer {
+            display: flex;
+            align-items: center;
+        }
+
+        .deleteButton, .editButton {
+            padding: 5px 10px;
+            font-size: 14px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+        }
+
+        .deleteButton {
+            background-color: #f44336;
+        }
+
+        .editButton {
+            background-color: #2196F3;
+            margin-right: 5px;
+        }
+
+        .deleteButton:hover {
+            background-color: #e31c0e;
+        }
+
+        .editButton:hover {
+            background-color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Пользователи</h1>
+
+<!-- Форма для добавления пользователя -->
+<div id="addUserContainer">
+    <input type="text" id="nameInput" placeholder="Имя пользователя" required>
+    <button id="addUserButton">Создать пользователя</button>
+</div>
+
+<!-- Контейнер для списка пользователей -->
+<div id="usersContainer">
+    <h2>Список пользователей</h2>
+    <div id="userList"></div>
+</div>
+
+<script>
+    // Функция для загрузки списка пользователей
+    function loadUsers() {
+        fetch('/users/list')
+            .then(response => response.json())
+            .then(users => {
+                const userList = document.getElementById('userList');
+                userList.innerHTML = ''; // Очистка списка
+
+                users.forEach(user => {
+                    const userDiv = document.createElement('div');
+                    userDiv.className = 'user';
+                    userDiv.innerHTML = `
+                        <span id="userName${user.id}">${user.name}</span>
+                        <div class="editContainer">
+                            <button class="editButton" onclick="showEditForm(${user.id}, '${user.name}')">Редактировать</button>
+                            <button class="deleteButton" onclick="deleteUser(${user.id})">Удалить</button>
+                        </div>
+                    `;
+                    userList.appendChild(userDiv);
+                });
+            })
+            .catch(error => console.error('Ошибка при загрузке пользователей:', error));
+    }
+
+    // Функция для добавления пользователя
+    document.getElementById('addUserButton').addEventListener('click', function() {
+        const name = document.getElementById('nameInput').value;
+        if (!name) {
+            alert('Имя не может быть пустым');
+            return;
+        }
+
+        const data = { name: name };
+
+        fetch('/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        })
+            .then(response => {
+                if (response.ok) {
+                    document.getElementById('nameInput').value = ''; // Очистка поля ввода
+                    loadUsers(); // Обновляем список пользователей
+                } else {
+                    console.error('Ошибка при добавлении пользователя');
+                }
+            })
+            .catch(error => console.error('Ошибка при добавлении пользователя:', error));
+    });
+
+    // Функция для удаления пользователя
+    function deleteUser(id) {
+        fetch(`/users/${id}`, {
+            method: 'DELETE',
+        })
+            .then(response => {
+                if (response.ok) {
+                    loadUsers(); // Обновляем список пользователей
+                } else {
+                    console.error('Ошибка при удалении пользователя');
+                }
+            })
+            .catch(error => console.error('Ошибка при удалении пользователя:', error));
+    }
+
+    // Функция для отображения формы редактирования пользователя
+    function showEditForm(id, currentName) {
+        const userNameElement = document.getElementById(`userName${id}`);
+        userNameElement.innerHTML = `
+            <input type="text" id="editName${id}" value="${currentName}">
+            <button onclick="updateUser(${id})">Сохранить</button>
+        `;
+    }
+
+    // Функция для обновления пользователя
+    function updateUser(id) {
+        const newName = document.getElementById(`editName${id}`).value;
+        if (!newName) {
+            alert('Имя не может быть пустым');
+            return;
+        }
+
+        const data = { name: newName };
+
+        fetch(`/users/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+        })
+            .then(response => {
+                if (response.ok) {
+                    loadUsers(); // Обновляем список пользователей
+                } else {
+                    console.error('Ошибка при обновлении пользователя');
+                }
+            })
+            .catch(error => console.error('Ошибка при обновлении пользователя:', error));
+    }
+
+    // Загрузка пользователей при загрузке страницы
+    document.addEventListener('DOMContentLoaded', loadUsers);
+</script>
+
+</body>
+</html>
