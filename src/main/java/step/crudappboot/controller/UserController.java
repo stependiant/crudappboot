@@ -45,12 +45,7 @@ public class UserController {
 
     @PutMapping("/{id}")
     public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User updatedUser) {
-        User user = userService.getUserById(id);
-        if (user == null) {
-            return ResponseEntity.notFound().build();
-        }
-        user.setName(updatedUser.getName());
-        userService.update(user);
-        return ResponseEntity.ok(user);
+        userService.update(updatedUser, updatedUser.getId());
+        return ResponseEntity.ok(updatedUser);
     }
 }

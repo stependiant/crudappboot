@@ -2,28 +2,39 @@ package step.crudappboot.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import step.crudappboot.dao.UserRepository;
+import step.crudappboot.model.Role;
 import step.crudappboot.model.User;
 
+import java.util.Collections;
 import java.util.List;
 
 @Slf4j
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final RoleService roleService;
 
     @Autowired
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, RoleService roleService) {
         this.userRepository = userRepository;
-        log.info("UserService initialized with UserRepository: {}", userRepository);
+        this.passwordEncoder = passwordEncoder;
+        this.roleService = roleService;
     }
 
+    @Transactional
     public List<User> getAllUsers() {
         try {
             log.info("Fetching all users");
-            List<User> users = userRepository.findAllUsers();
+            List<User> users = userRepository.findAll();
             log.info("Found {} users", users.size());
             return users;
         } catch (NullPointerException e) {
@@ -32,6 +43,7 @@ public class UserService {
         }
     }
 
+    @Transactional
     public User getUserById(Long id) {
         log.info("Fetching user by id: {}", id);
         User user = userRepository.findById(id);
@@ -43,63 +55,50 @@ public class UserService {
         return user;
     }
 
+    @Transactional
+    public User getByUsername(String username) {
+        return userRepository.findByUsername(username);
+    }
+
+    @Transactional
+    public void register(User user) {
+        log.info("Registering user: {}", user);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        Role userRole = roleService.findByName("ROLE_ADMIN");
+        user.setRoles(Collections.singleton(userRole));
+        log.info("Save password in db");
+        userRepository.save(user);
+        log.info("User registered: {}", user);
+    }
+
+    @Transactional
     public void save(User user) {
         log.info("Saving user: {}", user);
         userRepository.save(user);
         log.info("User saved: {}", user);
     }
 
+    @Transactional
     public void deleteById(Long id) {
         log.info("Deleting user by id: {}", id);
         userRepository.deleteById(id);
         log.info("User with id {} deleted", id);
     }
 
-    public void update(User user) {
-        log.info("Updating user: {}", user);
-        userRepository.update(user);
-        log.info("User updated: {}", user);
+    @Transactional
+    public void update(User user, Long id) {
+        user.setId(id);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
+        userRepository.save(user);
     }
 
-    public boolean existsById(Long id) {
-        log.info("Checking if user with id {} exists", id);
-        boolean exists = userRepository.existsById(id);
-        log.info("User with id {} exists: {}", id, exists);
-        return exists;
-    }
-
-    public boolean existsByName(String name) {
-        log.info("Checking if user with name {} exists", name);
-        boolean exists = userRepository.existsByName(name);
-        log.info("User with name {} exists: {}", name, exists);
-        return exists;
-    }
-
-    public List<User> getByNameLike(String name) {
-        log.info("Fetching users with name like: {}", name);
-        List<User> users = userRepository.findByNameLike(name);
-        log.info("Found {} users with name like: {}", users.size(), name);
-        return users;
-    }
-
-    public List<User> getByNameStartsWith(String name) {
-        log.info("Fetching users with name starting with: {}", name);
-        List<User> users = userRepository.findByNameStartsWith(name);
-        log.info("Found {} users with name starting with: {}", users.size(), name);
-        return users;
-    }
-
-    public List<User> getByNameEndsWith(String name) {
-        log.info("Fetching users with name ending with: {}", name);
-        List<User> users = userRepository.findByNameEndsWith(name);
-        log.info("Found {} users with name ending with: {}", users.size(), name);
-        return users;
-    }
-
-    public List<User> getByNameContains(String name) {
-        log.info("Fetching users with name containing: {}", name);
-        List<User> users = userRepository.findByNameContains(name);
-        log.info("Found {} users with name containing: {}", users.size(), name);
-        return users;
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = userRepository.findByUsernameAndFetchLazyRelationEagerly(username);
+        if (user == null) {
+            System.out.println("user not found");
+            throw new UsernameNotFoundException("User not found with username: " + username);
+        }
+        return user;
     }
 }
