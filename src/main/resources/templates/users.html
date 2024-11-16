@@ -121,9 +121,9 @@
                     const userDiv = document.createElement('div');
                     userDiv.className = 'user';
                     userDiv.innerHTML = `
-                        <span id="userName${user.id}">${user.name}</span>
+                        <span id="userName${user.id}">${user.username}</span>
                         <div class="editContainer">
-                            <button class="editButton" onclick="showEditForm(${user.id}, '${user.name}')">Редактировать</button>
+                            <button class="editButton" onclick="showEditForm(${user.id}, '${user.username}')">Редактировать</button>
                             <button class="deleteButton" onclick="deleteUser(${user.id})">Удалить</button>
                         </div>
                     `;
@@ -135,13 +135,13 @@
 
     // Функция для добавления пользователя
     document.getElementById('addUserButton').addEventListener('click', function() {
-        const name = document.getElementById('nameInput').value;
-        if (!name) {
-            alert('Имя не может быть пустым');
+        const username = document.getElementById('nameInput').value;
+        if (!username) {
+            alert('Имя пользователя не может быть пустым');
             return;
         }
 
-        const data = { name: name };
+        const data = { username: username };
 
         fetch('/users', {
             method: 'POST',
@@ -175,23 +175,23 @@
     }
 
     // Функция для отображения формы редактирования пользователя
-    function showEditForm(id, currentName) {
+    function showEditForm(id, currentUsername) {
         const userNameElement = document.getElementById(`userName${id}`);
         userNameElement.innerHTML = `
-            <input type="text" id="editName${id}" value="${currentName}">
+            <input type="text" id="editName${id}" value="${currentUsername}">
             <button onclick="updateUser(${id})">Сохранить</button>
         `;
     }
 
     // Функция для обновления пользователя
     function updateUser(id) {
-        const newName = document.getElementById(`editName${id}`).value;
-        if (!newName) {
-            alert('Имя не может быть пустым');
+        const newUsername = document.getElementById(`editName${id}`).value;
+        if (!newUsername) {
+            alert('Имя пользователя не может быть пустым');
             return;
         }
 
-        const data = { name: newName };
+        const data = { username: newUsername };
 
         fetch(`/users/${id}`, {
             method: 'PUT',

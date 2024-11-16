@@ -64,7 +64,12 @@ public class UserService implements UserDetailsService {
     public void register(User user) {
         log.info("Registering user: {}", user);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
+
         Role userRole = roleService.findByName("ROLE_ADMIN");
+        if (userRole == null) {
+            throw new RuntimeException("Role ROLE_ADMIN not found");
+        }
+
         user.setRoles(Collections.singleton(userRole));
         log.info("Save password in db");
         userRepository.save(user);
