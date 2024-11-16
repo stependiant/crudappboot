@@ -90,12 +90,6 @@ public class UserService implements UserDetailsService {
         log.info("User with id {} deleted", id);
     }
 
-    @Transactional
-    public void update(User user, Long id) {
-        user.setId(id);
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        userRepository.save(user);
-    }
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {

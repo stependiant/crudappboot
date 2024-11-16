@@ -196,7 +196,7 @@
         fetch(`/users/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data),
+            body: JSON.stringify(data), // Передача JSON с новым именем
         })
             .then(response => {
                 if (response.ok) {
